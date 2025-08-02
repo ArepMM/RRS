@@ -217,7 +217,7 @@ void MainWindow::loadRoutesList(const std::string &routesDir)
         }
         else
         {
-            route_info.route_title = "<routes/" + route_info.route_dir_name + ">";
+            route_info.route_title = "routes/" + route_info.route_dir_name;
         }
 
         QString path = route_info.route_dir_full_path + QDir::separator() + "route-type";
@@ -249,16 +249,20 @@ void MainWindow::loadRoutesList(const std::string &routesDir)
 
     for (auto it = routes_info.begin(); it != routes_info.end(); ++it)
     {
+        int count = ui->lwRoutes->count();
         ui->lwRoutes->addItem((*it).route_title);
+        QString tooltip = "routes/" + (*it).route_dir_name;
+        ui->lwRoutes->item(count)->setToolTip(tooltip);
     }
     QString unavailable = "(недоступно) ";
-    QString unavailable_tooltip = "В папке маршрута файл route-type не найден или указывает на несовместимую версию";
+    QString unavailable_tooltip = "\nВ папке маршрута файл route-type не найден или указывает на несовместимую версию";
     unavailable_tooltip += "\nЕсли это маршрут от ZDSimulator, необходима конвертация утилитой /bin/routeconv.exe";
     for (auto it = unavailable_routes_info.begin(); it != unavailable_routes_info.end(); ++it)
     {
         int count = ui->lwRoutes->count();
         ui->lwRoutes->addItem(unavailable + (*it).route_title);
-        ui->lwRoutes->item(count)->setToolTip(unavailable_tooltip);
+        QString tooltip = "/routes/" + (*it).route_dir_name + unavailable_tooltip;
+        ui->lwRoutes->item(count)->setToolTip(tooltip);
     }
 }
 
@@ -289,7 +293,10 @@ void MainWindow::loadTrainsList(const std::string &trainsDir)
         }
 
         trains_info.push_back(train_info);
+        int count = ui->lwTrains->count();
         ui->lwTrains->addItem(train_info.train_title);
+        QString tooltip = "/cfg/trains/" + train_info.train_config_path;
+        ui->lwTrains->item(count)->setToolTip(tooltip);
     }
 }
 
