@@ -26,6 +26,9 @@
 //------------------------------------------------------------------------------
 struct route_info_t
 {
+    /// Check version of route
+    bool version_valid = false;
+
     /// Route directory path
     QString route_dir_full_path = "";
     /// Route directory name

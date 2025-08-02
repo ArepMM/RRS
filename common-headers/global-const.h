@@ -17,7 +17,7 @@
 #define     GLOBAL_CONST_H
 
 #define     APPLICATION_NAME    QString("simulator")
-#define     APPLICATION_VERSION QString("0.1.0")
+#define     APPLICATION_VERSION QString("1.8.0")
 /*
 #define     SHARED_MEMORY_SIM_INFO      QString("siminfo")
 #define     SHARED_MEMORY_SIM_UPDATE    QString("simupdate")

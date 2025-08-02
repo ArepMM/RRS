@@ -15,6 +15,7 @@
 #include    "mainwindow.h"
 #include    "train-waypoint-widget.h"
 #include    "ui_mainwindow.h"
+#include    "global-const.h"
 
 #include    <QPushButton>
 #include    <QDir>
@@ -198,6 +199,8 @@ void MainWindow::loadRoutesList(const std::string &routesDir)
     QDir routes(QString(routesDir.c_str()));
     QDirIterator route_dirs(routes.path(), QStringList(), QDir::NoDotAndDotDot | QDir::Dirs);
 
+    std::vector<route_info_t> unavailable_routes_info;
+
     while (route_dirs.hasNext())
     {
         route_info_t route_info;
@@ -205,7 +208,6 @@ void MainWindow::loadRoutesList(const std::string &routesDir)
         route_info.route_dir_name = route_dirs.fileName();
 
         CfgReader cfg;
-
         if (cfg.load(route_info.route_dir_full_path + QDir::separator() + "description.xml"))
         {
             QString secName = "Route";
@@ -213,17 +215,50 @@ void MainWindow::loadRoutesList(const std::string &routesDir)
             cfg.getString(secName, "Title", route_info.route_title);
             cfg.getString(secName, "Description", route_info.route_description);
         }
+        else
+        {
+            route_info.route_title = "<routes/" + route_info.route_dir_name + ">";
+        }
 
-        loadTrajectories(route_info);
-        loadTrainPositions(route_info);
-        loadStartConfigs(route_info);
+        QString path = route_info.route_dir_full_path + QDir::separator() + "route-type";
+        QFile route_type_file(path);
+        if (route_type_file.open(QIODevice::ReadOnly))
+        {
+            QTextStream stream(&route_type_file);
+            QStringList tokens = stream.readLine().split(':');
+            if ((tokens.size() > 1) && (tokens[1] == APPLICATION_VERSION))
+            {
+                route_info.version_valid = true;
 
-        routes_info.push_back(route_info);
+                loadTrajectories(route_info);
+                loadTrainPositions(route_info);
+                loadStartConfigs(route_info);
+
+                routes_info.push_back(route_info);
+            }
+            else
+            {
+                unavailable_routes_info.push_back(route_info);
+            }
+        }
+        else
+        {
+            unavailable_routes_info.push_back(route_info);
+        }
     }
 
     for (auto it = routes_info.begin(); it != routes_info.end(); ++it)
     {
         ui->lwRoutes->addItem((*it).route_title);
+    }
+    QString unavailable = "(недоступно) ";
+    QString unavailable_tooltip = "В папке маршрута файл route-type не найден или указывает на несовместимую версию";
+    unavailable_tooltip += "\nЕсли это маршрут от ZDSimulator, необходима конвертация утилитой /bin/routeconv.exe";
+    for (auto it = unavailable_routes_info.begin(); it != unavailable_routes_info.end(); ++it)
+    {
+        int count = ui->lwRoutes->count();
+        ui->lwRoutes->addItem(unavailable + (*it).route_title);
+        ui->lwRoutes->item(count)->setToolTip(unavailable_tooltip);
     }
 }
 
@@ -830,9 +865,10 @@ void MainWindow::slotRouteSelection()
     clearActiveTrainsList();
     ui->ptRouteDescription->clear();
 
-    if (route_idx == -1)
+    if ((route_idx == -1) || (route_idx >= routes_info.size()))
     {
         selected_route_idx = -1;
+        ui->pbAddTrain->setEnabled(false);
         return;
     }
 

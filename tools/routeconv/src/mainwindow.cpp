@@ -1,6 +1,7 @@
 #include    "mainwindow.h"
 #include    "ui_mainwindow.h"
 
+#include    "global-const.h"
 #include    "filesystem.h"
 #include    "CfgEditor.h"
 #include    "CfgReader.h"
@@ -60,7 +61,7 @@ bool MainWindow::createRouteTypeFile()
     if (file.open(QIODevice::WriteOnly))
     {
         QTextStream ss(&file);
-        ss << "zds";
+        ss << "RRS_Version:" << APPLICATION_VERSION;
         file.close();
 
         return true;
@@ -103,6 +104,8 @@ void MainWindow::startPathConverter()
 
     pathconvProc.setWorkingDirectory(QString(fs.getBinaryDir().c_str()));
     pathconvProc.start(pathconv_path, args);
+
+    ui->lStatus->setText(tr("Working path converter..."));
 }
 
 //------------------------------------------------------------------------------
@@ -119,6 +122,8 @@ void MainWindow::startProfConverter()
 
     profconvProc.setWorkingDirectory(QString(fs.getBinaryDir().c_str()));
     profconvProc.start(profconv_path, args);
+
+    ui->lStatus->setText(tr("Working prof converter..."));
 }
 
 //------------------------------------------------------------------------------
@@ -139,6 +144,8 @@ void MainWindow::startDmd2gltfConverter()
 
     dmd2gltfProc.setWorkingDirectory(QString(fs.getBinaryDir().c_str()));
     dmd2gltfProc.start(dmd2gltf_path, args);
+
+    ui->lStatus->setText(tr("Working dmd2gltf converter..."));
 }
 
 //------------------------------------------------------------------------------
@@ -315,8 +322,11 @@ void MainWindow::slotConvert()
 
     if (ui->teRouteDescription->toPlainText().isEmpty())
     {
+/*
         ui->lStatus->setText(tr("Error: route description is empty. Please fill it"));
         return;
+*/
+        ui->teRouteDescription->setText(ui->leRouteTitle->text());
     }
 
     if (!createRouteTypeFile())
