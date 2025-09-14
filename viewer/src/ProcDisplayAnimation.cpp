@@ -13,6 +13,7 @@
 #include <sstream>
 #include <vsg/maths/vec4.h>
 #include <vsg/state/Image.h>
+#include <vsg/threading/OperationThreads.h>
 
 //------------------------------------------------------------------------------
 //
@@ -40,6 +41,14 @@ std::size_t ProcDisplayAnimation::getSignalID() const
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
+void ProcDisplayAnimation::setOperationThreads(vsg::ref_ptr<vsg::OperationThreads> operationThreads)
+{
+    operation_threads = operationThreads;
+}
+
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
 void ProcDisplayAnimation::anim_step(float t, float dt)
 {
     if (display)
@@ -53,6 +62,61 @@ void ProcDisplayAnimation::anim_step(float t, float dt)
             prev_signals = server_signals;
         }
 
+        struct UpdateDisplayOperation : public vsg::Inherit<vsg::Operation, UpdateDisplayOperation>
+        {
+            float t;
+            float dt;
+            AbstractDisplay& display;
+            QImage& qimage;
+            vsg::ref_ptr<vsg::Data> color_data;
+            vsg::ref_ptr<vsg::Data> emissive_data;
+
+            UpdateDisplayOperation(float& in_t, float& in_dt, AbstractDisplay& in_d, QImage& in_i,
+                                   vsg::ref_ptr<vsg::Data> in_c,
+                                   vsg::ref_ptr<vsg::Data> in_e) :
+                Inherit(),
+                t(in_t),
+                dt(in_dt),
+                display(in_d),
+                qimage(in_i),
+                color_data(in_c),
+                emissive_data(in_e) {}
+
+            void run() override
+            {
+                // Обновляем дисплейный модуль
+                display.update(t, dt);
+
+                QPainter painter(&qimage);
+                display.render(&painter);
+                painter.end();
+
+                // Указываем VSG обновить текстуру, data уже указывает на пиксели в qimage
+                if (color_data)
+                {
+                    color_data->dirty();
+                }
+                if (emissive_data)
+                {
+                    emissive_data->dirty();
+                }
+            }
+        };
+
+        vsg::ref_ptr<vsg::Operation> operation = UpdateDisplayOperation::create(
+            t, dt, *display, qimage,
+            is_color_repaint ? image_color->data : nullptr,
+            is_emissive_repaint ? image_emissive->data : nullptr);
+
+        if (operation_threads)
+        {
+            operation_threads->add(operation);
+        }
+        else
+        {
+            operation->run();
+        }
+/*
         // Обновляем дисплейный модуль
         display->update(t, dt);
 
@@ -71,6 +135,7 @@ void ProcDisplayAnimation::anim_step(float t, float dt)
         {
             image_emissive->data->dirty();
         }
+*/
     }
 
     // Яркость дисплея

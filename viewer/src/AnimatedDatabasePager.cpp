@@ -4,12 +4,14 @@
 #include "FindCustomAnimationsVisitor.h"
 #include "FindModelAnimations.h"
 #include "Logger.h"
+#include "ProcDisplayAnimation.h"
 
 #include <vsg/io/ReaderWriter.h>
 #include <vsg/io/read.h>
 #include <vsg/nodes/Transform.h>
 #include <vsg/nodes/CullNode.h>
 #include <vsg/threading/atomics.h>
+#include <vsg/threading/OperationThreads.h>
 #include <vsg/ui/ApplicationEvent.h>
 #include <vsg/utils/SharedObjects.h>
 #include <vsg/utils/PropagateDynamicObjects.h>
@@ -169,5 +171,14 @@ vsg::ref_ptr<vsg::Node> AnimatedDatabasePager::loadAnimations(vsg::ref_ptr<Anima
         node = copyop(node);
         fcav.reconfigure_animations();
     }
+
+    for (auto& animation : aplod->animations_map->animations)
+    {
+        if (auto display_animation = animation.second.cast<ProcDisplayAnimation>())
+        {
+            display_animation->setOperationThreads(aplod->options->operationThreads);
+        }
+    }
+
     return node;
 }

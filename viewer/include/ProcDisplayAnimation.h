@@ -18,9 +18,8 @@ class CfgReader;
 
 namespace vsg
 {
-
 class Image;
-
+class OperationThreads;
 }
 
 //------------------------------------------------------------------------------
@@ -36,6 +35,8 @@ public:
     );
 
     std::size_t getSignalID() const override;
+
+    void setOperationThreads(vsg::ref_ptr<vsg::OperationThreads> operationThreads);
 
 private:
     void anim_step(float t, float dt) override;
@@ -57,6 +58,7 @@ private:
 
     std::vector<float>* prev_signals = nullptr;
 
+    vsg::ref_ptr<vsg::OperationThreads> operation_threads;
     AbstractDisplay* display = nullptr;
     QImage qimage;
     bool is_color_repaint = true;
