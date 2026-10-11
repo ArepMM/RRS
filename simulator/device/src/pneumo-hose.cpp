@@ -139,17 +139,35 @@ void PneumoHose::setLength(double value)
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
-void PneumoHose::setShiftSide(double value)
+void PneumoHose::setRootCoord(dvec3 coord)
 {
-    output_signals[HOSE_OUTPUT_SIDE] = value;
+    output_signals[HOSE_OUTPUT_ROOT_COORD_X] = coord.x;
+    output_signals[HOSE_OUTPUT_ROOT_COORD_Y] = coord.y;
+    output_signals[HOSE_OUTPUT_ROOT_COORD_Z] = coord.z;
 }
 
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
-void PneumoHose::setCoord(double value)
+void PneumoHose::setOrth(dvec3 vector)
 {
-    output_signals[HOSE_OUTPUT_COORD] = value;
+    v_orth = vector;
+}
+
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+void PneumoHose::setRight(dvec3 vector)
+{
+    v_right = vector;
+}
+
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+void PneumoHose::setUp(dvec3 vector)
+{
+    v_up = vector;
 }
 
 //------------------------------------------------------------------------------
@@ -170,10 +188,7 @@ double PneumoHose::getFlow() const
 //------------------------------------------------------------------------------
 double PneumoHose::getSideAngle() const
 {
-    if (isConnected())
-        return input_signals[HOSE_INPUT_SIDE_ANGLE];
-
-    return 0.0;
+    return side_angle;
 }
 
 //------------------------------------------------------------------------------
@@ -181,10 +196,15 @@ double PneumoHose::getSideAngle() const
 //------------------------------------------------------------------------------
 double PneumoHose::getDownAngle() const
 {
-    if (isConnected())
-        return input_signals[HOSE_INPUT_DOWN_ANGLE];
+    return down_angle;
+}
 
-    return 0.0;
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+dvec3 PneumoHose::getConnectionPoint() const
+{
+    return v_hose;
 }
 
 //------------------------------------------------------------------------------
@@ -229,6 +249,28 @@ void PneumoHose::step(double t, double dt)
 
     atm_flow_sound.state = !isConnected();
     atm_flow_sound.volume = K_sound * cbrt(getFlow());
+
+
+    if (!isConnected())
+    {
+        // Если не соединены с соседним рукавом, считать углы не надо
+        side_angle = 0.0;
+        down_angle = 0.0;
+        return;
+    }
+
+    // Вектор к точке соединения
+    dvec3 v = { input_signals[HOSE_INPUT_CONNECTION_COORD_X] - output_signals[HOSE_OUTPUT_ROOT_COORD_X],
+                input_signals[HOSE_INPUT_CONNECTION_COORD_Y] - output_signals[HOSE_OUTPUT_ROOT_COORD_Y],
+                input_signals[HOSE_INPUT_CONNECTION_COORD_Z] - output_signals[HOSE_OUTPUT_ROOT_COORD_Z] };
+
+    // Пересчитываем в локальные оси подвижной единицы
+    v_hose =  { v_right.x * v.x + v_right.y * v.y + v_right.z * v.z,
+                v_orth.x  * v.x + v_orth.y  * v.y + v_orth.z  * v.z,
+                v_up.x    * v.x + v_up.y    * v.y + v_up.z    * v.z };
+    const dvec3 v_unit = normalize(v_hose);
+    side_angle = std::atan2(v_unit.x, v_unit.y);
+    down_angle = std::asin(v_unit.z);
 }
 
 //------------------------------------------------------------------------------

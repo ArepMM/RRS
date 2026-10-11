@@ -2,6 +2,7 @@
 
 #include    "CfgReader.h"
 #include    "physics.h"
+#include    "vec3.h"
 
 #include    "device.h"
 #include    "core/get_module.h"
@@ -56,53 +57,67 @@ void JointPneumoHoseEPB::stepConnectionCheck()
 
     if (!is_connected)
     {
-        devices[FWD]->setInputSignal(HOSE_INPUT_SIDE_ANGLE, 0.0);
-        devices[FWD]->setInputSignal(HOSE_INPUT_DOWN_ANGLE, 0.0);
-        devices[BWD]->setInputSignal(HOSE_INPUT_SIDE_ANGLE, 0.0);
-        devices[BWD]->setInputSignal(HOSE_INPUT_DOWN_ANGLE, 0.0);
+        devices[FWD]->setInputSignal(HOSE_INPUT_CONNECTION_COORD_X, 0.0);
+        devices[FWD]->setInputSignal(HOSE_INPUT_CONNECTION_COORD_Y, 0.0);
+        devices[FWD]->setInputSignal(HOSE_INPUT_CONNECTION_COORD_Z, 0.0);
+        devices[BWD]->setInputSignal(HOSE_INPUT_CONNECTION_COORD_X, 0.0);
+        devices[BWD]->setInputSignal(HOSE_INPUT_CONNECTION_COORD_Y, 0.0);
+        devices[BWD]->setInputSignal(HOSE_INPUT_CONNECTION_COORD_Z, 0.0);
         return;
     }
 
     // Расчёт геометрии рукавов
-    double length_fwd = devices[FWD]->getOutputSignal(HOSE_OUTPUT_LENGTH);
-    double length_bwd = devices[BWD]->getOutputSignal(HOSE_OUTPUT_LENGTH);
+    const double len_fwd = devices[FWD]->getOutputSignal(HOSE_OUTPUT_LENGTH);
+    const dvec3 coord_fwd = { devices[FWD]->getOutputSignal(HOSE_OUTPUT_ROOT_COORD_X),
+                              devices[FWD]->getOutputSignal(HOSE_OUTPUT_ROOT_COORD_Y),
+                              devices[FWD]->getOutputSignal(HOSE_OUTPUT_ROOT_COORD_Z) };
+    const double len_bwd = devices[BWD]->getOutputSignal(HOSE_OUTPUT_LENGTH);
+    const dvec3 coord_bwd = { devices[BWD]->getOutputSignal(HOSE_OUTPUT_ROOT_COORD_X),
+                              devices[BWD]->getOutputSignal(HOSE_OUTPUT_ROOT_COORD_Y),
+                              devices[BWD]->getOutputSignal(HOSE_OUTPUT_ROOT_COORD_Z) };
 
-    // Точками крепления рукавов и расстояния в треугольние между ними
-    double coord_fwd = devices[FWD]->getOutputSignal(HOSE_OUTPUT_COORD);
-    double coord_bwd = devices[BWD]->getOutputSignal(HOSE_OUTPUT_COORD);
-    double coord_delta = max(0.001, coord_fwd - coord_bwd);
-    double side_shift_fwd = devices[FWD]->getOutputSignal(HOSE_OUTPUT_SIDE);
-    double side_shift_bwd = devices[BWD]->getOutputSignal(HOSE_OUTPUT_SIDE);
-    double side_shift = side_shift_fwd + side_shift_bwd;
+    // Расстояния между точками крепления
+    const dvec3 coord_delta = coord_fwd - coord_bwd;
+    const double len2 = length2(coord_delta);
+    const double len = std::sqrt(len2);
 
-    // Расстояние между точками крепления рукавов по теореме Пифагора
-    double length_quad = coord_delta * coord_delta + side_shift * side_shift;
-    double length = sqrt(length_quad);
-
-    // Неравенство треугольника
-    if ( (length_fwd + length_bwd - length) < Physics::ZERO )
+    // Неравенства треугольника
+    if (   ((len_fwd + len_bwd - len) < Physics::ZERO)
+        || ((len + len_fwd - len_bwd) < Physics::ZERO)
+        || ((len_bwd + len - len_fwd) < Physics::ZERO))
     {
         is_connected = false;
-        devices[FWD]->setInputSignal(HOSE_INPUT_SIDE_ANGLE, 0.0);
-        devices[FWD]->setInputSignal(HOSE_INPUT_DOWN_ANGLE, 0.0);
-        devices[BWD]->setInputSignal(HOSE_INPUT_SIDE_ANGLE, 0.0);
-        devices[BWD]->setInputSignal(HOSE_INPUT_DOWN_ANGLE, 0.0);
+        devices[FWD]->setInputSignal(HOSE_INPUT_CONNECTION_COORD_X, 0.0);
+        devices[FWD]->setInputSignal(HOSE_INPUT_CONNECTION_COORD_Y, 0.0);
+        devices[FWD]->setInputSignal(HOSE_INPUT_CONNECTION_COORD_Z, 0.0);
+        devices[BWD]->setInputSignal(HOSE_INPUT_CONNECTION_COORD_X, 0.0);
+        devices[BWD]->setInputSignal(HOSE_INPUT_CONNECTION_COORD_Y, 0.0);
+        devices[BWD]->setInputSignal(HOSE_INPUT_CONNECTION_COORD_Z, 0.0);
         return;
     }
 
-    // Угол отклонения рукава в сторону соседнего
-    double angle = acos( (length_quad + coord_delta * coord_delta - side_shift * side_shift)
-                        / (2.0 * length * coord_delta) );
-    devices[FWD]->setInputSignal(HOSE_INPUT_SIDE_ANGLE, sign(side_shift) * angle);
-    devices[BWD]->setInputSignal(HOSE_INPUT_SIDE_ANGLE, sign(side_shift) * angle);
+    // Единичный вектор между точками крепления
+    const dvec3 v_unit = coord_delta / len;
+    // Единичный вектор вниз
+    const dvec3 v_down = {0.0, 0.0, -1.0};
+    // Единичный вектор вдоль высоты треугольника в направлении вниз
+    const dvec3 v_h = normalize(v_down - v_unit * dot(v_down, v_unit));
 
-    // Угол свешивания рукава вниз
-    angle = acos( (length_quad + length_fwd * length_fwd - length_bwd * length_bwd)
-                 / (2.0 * length * length_fwd) );
-    devices[FWD]->setInputSignal(HOSE_INPUT_DOWN_ANGLE, angle);
-    angle = acos( (length_quad + length_bwd * length_bwd - length_fwd * length_fwd)
-                 / (2.0 * length * length_bwd) );
-    devices[BWD]->setInputSignal(HOSE_INPUT_DOWN_ANGLE, angle);
+    // Проекция одного из рукавов
+    const double fwd_proj =   (len2 + len_fwd * len_fwd - len_bwd * len_bwd)
+                            / (2.0 * len);
+    // Высота треугольника
+    const double h = std::sqrt(len_fwd * len_fwd - fwd_proj * fwd_proj);
+
+    // Рассчитываем точку соединения рукавов
+    const dvec3 point = coord_fwd + v_unit * fwd_proj + v_h * h;
+
+    devices[FWD]->setInputSignal(HOSE_INPUT_CONNECTION_COORD_X, point.x);
+    devices[FWD]->setInputSignal(HOSE_INPUT_CONNECTION_COORD_Y, point.y);
+    devices[FWD]->setInputSignal(HOSE_INPUT_CONNECTION_COORD_Z, point.z);
+    devices[BWD]->setInputSignal(HOSE_INPUT_CONNECTION_COORD_X, point.x);
+    devices[BWD]->setInputSignal(HOSE_INPUT_CONNECTION_COORD_Y, point.y);
+    devices[BWD]->setInputSignal(HOSE_INPUT_CONNECTION_COORD_Z, point.z);
 }
 
 //------------------------------------------------------------------------------
