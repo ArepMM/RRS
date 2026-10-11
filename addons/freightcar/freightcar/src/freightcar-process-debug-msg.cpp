@@ -1,3 +1,4 @@
+#include "freightcar-signals.h"
 #include    "freightcar.h"
 
 #include "brake-auto-mode.h"
@@ -48,6 +49,21 @@ void FreightCar::debugPrint(const simulator_time_t& t, const double& dt)
                     .arg(anglecock_bp_bwd->isOpened() ? "\\" : "|")
                     .arg(hose_bp_bwd->isConnected() ? "_" : " ")
                     .arg(hose_bp_bwd->isLinked() ? "/" : " ");
+    DebugMsg += QString("  |  ");
+    DebugMsg += QString("down %1(%2) side %3(%4) {%5+%6=%7, %8+%9=%10, %11+%12=%13}")
+                    .arg(hose_bp_fwd->getDownAngle() * 180.0/Physics::PI, 6, 'f', 2)
+                    .arg(analogSignal[HOSE_BP_FWD_ANGLE_DOWN] * 180.0/Physics::PI, 6, 'f', 2)
+                    .arg(hose_bp_fwd->getSideAngle() * 180.0/Physics::PI, 6, 'f', 2)
+                    .arg(analogSignal[HOSE_BP_FWD_ANGLE_SIDE] * 180.0/Physics::PI, 6, 'f', 2)
+                    .arg(anglecock_bp_fwd->getHoseCoord().x, 7, 'f', 3)
+                    .arg(hose_bp_fwd->getConnectionPoint().x, 7, 'f', 3)
+                    .arg(anglecock_bp_fwd->getHoseCoord().x + hose_bp_fwd->getConnectionPoint().x, 7, 'f', 3)
+                    .arg(anglecock_bp_fwd->getHoseCoord().y, 7, 'f', 3)
+                    .arg(hose_bp_fwd->getConnectionPoint().y, 7, 'f', 3)
+                    .arg(anglecock_bp_fwd->getHoseCoord().y + hose_bp_fwd->getConnectionPoint().y, 7, 'f', 3)
+                    .arg(anglecock_bp_fwd->getHoseCoord().z, 7, 'f', 3)
+                    .arg(hose_bp_fwd->getConnectionPoint().z, 7, 'f', 3)
+                    .arg(anglecock_bp_fwd->getHoseCoord().z + hose_bp_fwd->getConnectionPoint().z, 7, 'f', 3);
 
     if (brake_shoes_set.getState())
     {
