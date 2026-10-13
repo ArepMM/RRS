@@ -90,7 +90,7 @@ void VL60k::stepBrakesControl(const double& t, const double& dt)
     hose_bc_fwd->setFlowCoeff(anglecock_bc_fwd->getFlowCoeff());
     hose_bc_fwd->setRootCoord(  profile_point_data.position
                               + profile_point_data.right * anglecock_bc_fwd->getHoseCoord().x
-                              + profile_point_data.orth * (length - 0.3)
+                              + profile_point_data.orth * (length / 2.0 - 0.3)
                               + profile_point_data.up * anglecock_bc_fwd->getHoseCoord().z);
     hose_bc_fwd->setOrth(profile_point_data.orth);
     hose_bc_fwd->setRight(profile_point_data.right);
@@ -101,7 +101,7 @@ void VL60k::stepBrakesControl(const double& t, const double& dt)
     hose_bc_bwd->setFlowCoeff(anglecock_bc_bwd->getFlowCoeff());
     hose_bc_bwd->setRootCoord(  profile_point_data.position
                               + profile_point_data.right * anglecock_bc_bwd->getHoseCoord().x
-                              + profile_point_data.orth * (length - 0.3)
+                              + profile_point_data.orth * (length / 2.0 - 0.3)
                               + profile_point_data.up * anglecock_bc_bwd->getHoseCoord().z);
     hose_bc_bwd->setOrth(-profile_point_data.orth);
     hose_bc_bwd->setRight(-profile_point_data.right);

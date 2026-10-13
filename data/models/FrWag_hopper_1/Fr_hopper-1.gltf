@@ -16,11 +16,11 @@
 				3,
 				4,
 				5,
+				18,
 				19,
 				20,
 				21,
-				22,
-				23
+				22
 			]
 		}
 	],
@@ -175,13 +175,7 @@
 				14
 			],
 			"mesh":10,
-			"name":"Hose_begin"
-		},
-		{
-			"children":[
-				15
-			],
-			"name":"Hose_root",
+			"name":"Hose_begin",
 			"rotation":[
 				-0.17969511449337006,
 				0,
@@ -191,7 +185,7 @@
 		},
 		{
 			"children":[
-				16
+				15
 			],
 			"name":"Hose_rotate_side",
 			"rotation":[
@@ -209,13 +203,13 @@
 		{
 			"children":[
 				7,
-				17
+				16
 			],
 			"name":"Return_to_vertical"
 		},
 		{
 			"children":[
-				18
+				17
 			],
 			"mesh":12,
 			"name":"Root_screw",

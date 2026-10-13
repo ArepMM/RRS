@@ -31,7 +31,7 @@ void FreightCar::signalsOutput(const simulator_time_t& t, const double& dt)
     // 40.894 градуса вправо, вокруг вертикальной оси
     // 20.704 градуса вниз, вокруг поперечной оси
     analogSignal[HOSE_BP_FWD_ANGLE_SIDE] = hose_bp_fwd->getSideAngle() - hose_bp_fwd->isConnected() * Physics::PI * 40.894 / 180.0;
-    analogSignal[HOSE_BP_FWD_ANGLE_DOWN] = hose_bp_fwd->getDownAngle() - Physics::PI * 20.704 / 180.0 + 1.0;
+    analogSignal[HOSE_BP_FWD_ANGLE_DOWN] = hose_bp_fwd->getDownAngle() + Physics::PI * 20.704 / 180.0 + 1.0;
 
     // Рукоятка переднего концевого крана тормозной магистрали
     analogSignal[ANGLECOCK_BP_FWD_STATE] = anglecock_bp_fwd->getHandlePosition();
