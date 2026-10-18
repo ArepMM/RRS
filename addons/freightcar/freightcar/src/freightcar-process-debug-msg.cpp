@@ -50,11 +50,14 @@ void FreightCar::debugPrint(const simulator_time_t& t, const double& dt)
                     .arg(hose_bp_bwd->isConnected() ? "_" : " ")
                     .arg(hose_bp_bwd->isLinked() ? "/" : " ");
     DebugMsg += QString("  |  ");
-    DebugMsg += QString("down %1(%2) side %3(%4) {%5+%6=%7, %8+%9=%10, %11+%12=%13}")
+    DebugMsg += QString("down %1(%2) side %3(%4) up %5(%6)")
                     .arg(hose_bp_fwd->getDownAngle() * 180.0/Physics::PI, 6, 'f', 2)
                     .arg(analogSignal[HOSE_BP_FWD_ANGLE_DOWN] * 180.0/Physics::PI, 6, 'f', 2)
                     .arg(hose_bp_fwd->getSideAngle() * 180.0/Physics::PI, 6, 'f', 2)
                     .arg(analogSignal[HOSE_BP_FWD_ANGLE_SIDE] * 180.0/Physics::PI, 6, 'f', 2)
+                    .arg(hose_bp_fwd->getHeadUpAngle() * 180.0/Physics::PI, 6, 'f', 2)
+                    .arg(analogSignal[HOSE_BP_FWD_ANGLE_HEAD_UP] * 180.0/Physics::PI, 6, 'f', 2);
+    DebugMsg += QString("{%1+%2=%3, %4+%5=%6, %7+%8=%9}")
                     .arg(anglecock_bp_fwd->getHoseCoord().x, 7, 'f', 3)
                     .arg(hose_bp_fwd->getConnectionPoint().x, 7, 'f', 3)
                     .arg(anglecock_bp_fwd->getHoseCoord().x + hose_bp_fwd->getConnectionPoint().x, 7, 'f', 3)
@@ -64,6 +67,24 @@ void FreightCar::debugPrint(const simulator_time_t& t, const double& dt)
                     .arg(anglecock_bp_fwd->getHoseCoord().z, 7, 'f', 3)
                     .arg(hose_bp_fwd->getConnectionPoint().z, 7, 'f', 3)
                     .arg(anglecock_bp_fwd->getHoseCoord().z + hose_bp_fwd->getConnectionPoint().z, 7, 'f', 3);
+    DebugMsg += QString("  |  ");
+    DebugMsg += QString("down %1(%2) side %3(%4) up %5(%6)")
+                    .arg(hose_bp_bwd->getDownAngle() * 180.0/Physics::PI, 6, 'f', 2)
+                    .arg(analogSignal[HOSE_BP_BWD_ANGLE_DOWN] * 180.0/Physics::PI, 6, 'f', 2)
+                    .arg(hose_bp_bwd->getSideAngle() * 180.0/Physics::PI, 6, 'f', 2)
+                    .arg(analogSignal[HOSE_BP_BWD_ANGLE_SIDE] * 180.0/Physics::PI, 6, 'f', 2)
+                    .arg(hose_bp_bwd->getHeadUpAngle() * 180.0/Physics::PI, 6, 'f', 2)
+                    .arg(analogSignal[HOSE_BP_BWD_ANGLE_HEAD_UP] * 180.0/Physics::PI, 6, 'f', 2);
+    DebugMsg += QString("{%1+%2=%3, %4+%5=%6, %7+%8=%9}")
+                    .arg(anglecock_bp_bwd->getHoseCoord().x, 7, 'f', 3)
+                    .arg(hose_bp_bwd->getConnectionPoint().x, 7, 'f', 3)
+                    .arg(anglecock_bp_bwd->getHoseCoord().x + hose_bp_bwd->getConnectionPoint().x, 7, 'f', 3)
+                    .arg(anglecock_bp_bwd->getHoseCoord().y, 7, 'f', 3)
+                    .arg(hose_bp_bwd->getConnectionPoint().y, 7, 'f', 3)
+                    .arg(anglecock_bp_bwd->getHoseCoord().y + hose_bp_bwd->getConnectionPoint().y, 7, 'f', 3)
+                    .arg(anglecock_bp_bwd->getHoseCoord().z, 7, 'f', 3)
+                    .arg(hose_bp_bwd->getConnectionPoint().z, 7, 'f', 3)
+                    .arg(anglecock_bp_bwd->getHoseCoord().z + hose_bp_bwd->getConnectionPoint().z, 7, 'f', 3);
 
     if (brake_shoes_set.getState())
     {
