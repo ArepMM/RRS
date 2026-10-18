@@ -4,6 +4,7 @@
 #include    "device-joint.h"
 
 #include    "pneumo-hose-data.h"
+#include    "vec3.h"
 
 enum
 {
@@ -29,6 +30,10 @@ public:
     virtual void step(double t, double dt);
 
 private:
+
+    /// Точки крепления
+    dvec3 coord_fwd = {0.0, 0.0, 0.0};
+    dvec3 coord_bwd = {0.0, 0.0, 0.0};
 
     /// Состояние соединения рукавов
     bool is_connected;

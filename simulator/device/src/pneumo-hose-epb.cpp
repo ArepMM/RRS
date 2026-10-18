@@ -6,7 +6,6 @@
 //
 //------------------------------------------------------------------------------
 PneumoHoseEPB::PneumoHoseEPB(QObject *parent) : PneumoHose(parent)
-  , lines_num(1)
 {
     name = QString("BPepb");
 }

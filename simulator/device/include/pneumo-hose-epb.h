@@ -48,7 +48,7 @@ public:
 protected:
 
     /// Число линий управления ЭПТ
-    size_t lines_num;
+    size_t lines_num = 1;
 
     /// Загрузка параметров из конфигурационного файла
     virtual void load_config(CfgReader &cfg);

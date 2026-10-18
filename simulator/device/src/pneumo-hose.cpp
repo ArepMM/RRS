@@ -12,10 +12,10 @@ PneumoHose::PneumoHose(QObject *parent) : Device(parent)
     name = QString("BP");
 
     input_signals.resize(HOSE_SIZE_OF_INPUTS);
-    output_signals.resize(HOSE_SIZE_OF_OUTPUTS);
-
     std::fill(input_signals.begin(), input_signals.end(), 0.0);
-    std::fill(output_signals.begin(), output_signals.end(), 0.0);
+
+    output_signals.resize(HOSE_SIZE_OF_OUTPUTS);
+    output_signals = {0.0, 0.0, 1.0, 0.435, 0.160, 0.0, 0.0, 0.0};
 
     ref_state.setSpringFirst();
     ref_state.setSpringLast();
@@ -131,9 +131,17 @@ void PneumoHose::setFlowCoeff(double value)
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
-void PneumoHose::setLength(double value)
+void PneumoHose::setMiddleLength(double value)
 {
-    output_signals[HOSE_OUTPUT_LENGTH] = value;
+    output_signals[HOSE_OUTPUT_LENGTH_MIDDLE] = value;
+}
+
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
+void PneumoHose::setHeadLength(double value)
+{
+    output_signals[HOSE_OUTPUT_LENGTH_HEAD] = value;
 }
 
 //------------------------------------------------------------------------------
@@ -202,6 +210,14 @@ double PneumoHose::getDownAngle() const
 //------------------------------------------------------------------------------
 //
 //------------------------------------------------------------------------------
+double PneumoHose::getHeadUpAngle() const
+{
+    return head_up_angle;
+}
+
+//------------------------------------------------------------------------------
+//
+//------------------------------------------------------------------------------
 dvec3 PneumoHose::getConnectionPoint() const
 {
     return v_hose;
@@ -256,13 +272,14 @@ void PneumoHose::step(double t, double dt)
         // Если не соединены с соседним рукавом, считать углы не надо
         side_angle = 0.0;
         down_angle = 0.0;
+        head_up_angle = 0.0;
         return;
     }
 
     // Вектор к точке соединения
-    dvec3 v = { input_signals[HOSE_INPUT_CONNECTION_COORD_X] - output_signals[HOSE_OUTPUT_ROOT_COORD_X],
-                input_signals[HOSE_INPUT_CONNECTION_COORD_Y] - output_signals[HOSE_OUTPUT_ROOT_COORD_Y],
-                input_signals[HOSE_INPUT_CONNECTION_COORD_Z] - output_signals[HOSE_OUTPUT_ROOT_COORD_Z] };
+    dvec3 v = { input_signals[HOSE_INPUT_HEAD_ROOT_COORD_X] - output_signals[HOSE_OUTPUT_ROOT_COORD_X],
+                input_signals[HOSE_INPUT_HEAD_ROOT_COORD_Y] - output_signals[HOSE_OUTPUT_ROOT_COORD_Y],
+                input_signals[HOSE_INPUT_HEAD_ROOT_COORD_Z] - output_signals[HOSE_OUTPUT_ROOT_COORD_Z] };
 
     // Пересчитываем в локальные оси подвижной единицы
     v_hose =  { v_right.x * v.x + v_right.y * v.y + v_right.z * v.z,
@@ -271,6 +288,7 @@ void PneumoHose::step(double t, double dt)
     const dvec3 v_unit = normalize(v_hose);
     side_angle = std::atan2(v_unit.x, v_unit.y);
     down_angle = std::asin(v_unit.z);
+    head_up_angle = input_signals[HOSE_INPUT_HEAD_ROOT_ANGLE_UP];
 }
 
 //------------------------------------------------------------------------------
@@ -299,9 +317,9 @@ void PneumoHose::load_config(CfgReader &cfg)
     output_signals[HOSE_OUTPUT_FLOW_COEFF] = tmp;
 
     cfg.getDouble(secName, "K_sound", K_sound);
-
+/*
     tmp = 0.71;
     cfg.getDouble(secName, "Length", tmp);
     if (tmp > Physics::ZERO)
-        output_signals[HOSE_OUTPUT_LENGTH] = tmp;
+        output_signals[HOSE_OUTPUT_LENGTH] = tmp;*/
 }

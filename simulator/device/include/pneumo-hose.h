@@ -52,8 +52,11 @@ public:
     /// Задать коэффициент перетока через рукав
     void setFlowCoeff(double value);
 
-    /// Задать длину рукава, м
-    void setLength(double value);
+    /// Задать длину средней части рукава (от точки изгиба в начале до точки изгиба перед соединительной головкой), м
+    void setMiddleLength(double value);
+
+    /// Длина жёсткого окончания рукава с соединительной головкой, м
+    void setHeadLength(double value);
 
     /// Задать точку крепления рукава в мировых координатах, м
     void setRootCoord(dvec3 coord);
@@ -76,6 +79,9 @@ public:
 
     /// Получить угол свешивания рукава вниз от продольной оси, радиан
     double getDownAngle() const;
+
+    /// Получить угол поворота соединительной головки вверх, радиан
+    double getHeadUpAngle() const;
 
     dvec3 getConnectionPoint() const;
 
@@ -122,6 +128,9 @@ protected:
 
     /// Угол свешивания рукава вниз от продольной оси, радиан
     double down_angle = 0.0;
+
+    /// Угол свешивания рукава вниз от продольной оси, радиан
+    double head_up_angle = 0.0;
 
     virtual void ode_system(const state_vector_t &Y,
                             state_vector_t &dYdt,
