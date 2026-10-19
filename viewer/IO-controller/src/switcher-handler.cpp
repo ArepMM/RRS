@@ -52,7 +52,7 @@ bool SwitcherHandler::load_config(CfgReader &cfg, QDomNode secNode)
 
     QString tmp = "";
     cfg.getString(secNode, "PositionsNames", tmp);
-    positionNames = tmp.split(',');            
+    positionNames = tmp.isEmpty() ? QStringList() : tmp.split(',');
 
     return true;
 }

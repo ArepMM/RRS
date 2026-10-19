@@ -32,9 +32,9 @@ WindowHandler::WindowHandler(EditorContext& editor_context)
     window_traits->screenNum = window_settings.screen_number;
     window_traits->windowTitle = window_settings.title;
 
-    window_traits->swapchainPreferences.presentMode =
-        window_settings.vsync ? VK_PRESENT_MODE_FIFO_KHR
-                              : VK_PRESENT_MODE_MAILBOX_KHR;
+    window_traits->swapchainPreferences.presentMode
+        = window_settings.vsync ? VK_PRESENT_MODE_FIFO_KHR
+                                : VK_PRESENT_MODE_MAILBOX_KHR;
 
     window_traits->samples = samples_bit_flag(window_settings.samples);
 
@@ -56,8 +56,8 @@ void WindowHandler::apply(vsg::ConfigureWindowEvent& configureWindow)
     const std::uint32_t width{configureWindow.width};
     const std::uint32_t height{configureWindow.height};
 
-    camera->get_perspective()->aspectRatio =
-        static_cast<double>(width) / static_cast<double>(height);
+    camera->get_perspective()->aspectRatio
+        = static_cast<double>(width) / static_cast<double>(height);
 
     camera->viewportState->set(0, 0, width, height);
 }

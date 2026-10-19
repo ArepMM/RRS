@@ -36,68 +36,63 @@ Camera::Camera(EditorContext& editor_context)
     const double window_height = static_cast<double>(window_extent.height);
     const double aspect_ratio = window_width / window_height;
 
-    perspective = vsg::Perspective::create(
-        camera_settings.fovy,
-        aspect_ratio,
-        camera_settings.zNear,
-        camera_settings.view_distance
-    );
+    perspective = vsg::Perspective::create(camera_settings.fovy, aspect_ratio,
+                                           camera_settings.zNear,
+                                           camera_settings.view_distance);
 
     create_orthographic_projection(aspect_ratio);
 
     const double initial_height = camera_settings.initial_height;
 
-    look_at = vsg::LookAt::create(
-        vsg::dvec3(0.0, 0.0, initial_height),
-        vsg::dvec3(0.0, 1.0, initial_height),
-        vsg::dvec3(0.0, 0.0, 1.0));
+    look_at = vsg::LookAt::create(vsg::dvec3(0.0, 0.0, initial_height),
+                                  vsg::dvec3(0.0, 1.0, initial_height),
+                                  vsg::dvec3(0.0, 0.0, 1.0));
 
     this->projectionMatrix = perspective;
     this->viewMatrix = look_at;
     this->viewportState = vsg::ViewportState::create(window_extent);
 
-    another_projection_matrix = orthographic;
+    another_proj_mat = orthographic;
 
-    calculate_front();
-    calculate_right();
-    calculate_up();
-    calculate_inverse_projection_matrix();
-    calculate_inverse_view_matrix();
+    calc_front();
+    calc_right();
+    calc_up();
+    calc_inv_proj_mat();
+    calc_inv_view_mat();
 }
 
-void Camera::swap_projection_matrix()
+void Camera::swap_proj_mat()
 {
-    std::swap(projectionMatrix, another_projection_matrix);
-    calculate_inverse_projection_matrix();
+    std::swap(projectionMatrix, another_proj_mat);
+    calc_inv_proj_mat();
 }
 
-void Camera::update_move_direction()
+void Camera::update_move_dir()
 {
     const auto& keyboard = editor_context.keyboard;
 
-    const int forward_move_direction =
-        static_cast<int>(keyboard->pressed(ACTION_MOVE_CAMERA_FORWARD)) -
-        static_cast<int>(keyboard->pressed(ACTION_MOVE_CAMERA_BACKWARD));
+    const int forward_move_dir
+        = static_cast<int>(keyboard->pressed(ACTION_MOVE_CAMERA_FORWARD))
+          - static_cast<int>(keyboard->pressed(ACTION_MOVE_CAMERA_BACKWARD));
 
-    const int right_move_direction =
-        static_cast<int>(keyboard->pressed(ACTION_MOVE_CAMERA_RIGHT)) -
-        static_cast<int>(keyboard->pressed(ACTION_MOVE_CAMERA_LEFT));
+    const int right_move_dir
+        = static_cast<int>(keyboard->pressed(ACTION_MOVE_CAMERA_RIGHT))
+          - static_cast<int>(keyboard->pressed(ACTION_MOVE_CAMERA_LEFT));
 
-    if ((forward_move_direction == 0) && (right_move_direction == 0))
+    if ((forward_move_dir == 0) && (right_move_dir == 0))
     {
-        move_direction = {0.0, 0.0, 0.0};
+        move_dir = {0.0, 0.0, 0.0};
         return;
     }
 
-    move_direction = front * forward_move_direction +
-        right * right_move_direction;
+    move_dir = front * forward_move_dir + right * right_move_dir;
 
     if (projectionMatrix == orthographic)
     {
-        move_direction.z = 0.0;
+        move_dir.z = 0.0;
     }
 
-    move_direction = vsg::normalize(move_direction);
+    move_dir = vsg::normalize(move_dir);
 }
 
 void Camera::handle_mouse_move()
@@ -107,15 +102,15 @@ void Camera::handle_mouse_move()
 
     const double rotate_speed = camera_settings.rotate_speed;
 
-    yaw_degrees += mouse->get_delta_x() * rotate_speed;
-    pitch_degrees -= mouse->get_delta_y() * rotate_speed;
-    pitch_degrees = std::clamp(pitch_degrees, -89.0, 89.0);
+    yaw_deg += mouse->get_delta_x() * rotate_speed;
+    pitch_deg -= mouse->get_delta_y() * rotate_speed;
+    pitch_deg = std::clamp(pitch_deg, -89.0, 89.0);
 
-    calculate_front();
-    calculate_right();
-    calculate_up();
+    calc_front();
+    calc_right();
+    calc_up();
 
-    update_move_direction();
+    update_move_dir();
 }
 
 void Camera::handle_mouse_scroll()
@@ -126,16 +121,16 @@ void Camera::handle_mouse_scroll()
     double& fovy = perspective->fieldOfViewY;
     fovy -= mouse->get_scroll() * camera_settings.zoom_power;
     fovy = std::clamp(fovy, camera_settings.fovy_min, camera_settings.fovy_max);
-    calculate_inverse_projection_matrix();
+    calc_inv_proj_mat();
 }
 
 void Camera::update(double delta_time)
 {
     const auto& camera_settings = editor_context.camera_settings;
 
-    look_at->eye += camera_settings.move_speed * delta_time * move_direction;
+    look_at->eye += camera_settings.move_speed * delta_time * move_dir;
     look_at->center = look_at->eye + front;
-    calculate_inverse_view_matrix();
+    calc_inv_view_mat();
 }
 
 const vsg::dvec3& Camera::get_front() const
@@ -168,14 +163,20 @@ const vsg::ref_ptr<vsg::LookAt>& Camera::get_look_at() const
     return look_at;
 }
 
-const vsg::dmat4& Camera::get_inverse_projection_matrix() const
+const vsg::dmat4& Camera::get_inv_proj_mat() const
 {
-    return inverse_projection_matrix;
+    return inv_proj_mat;
 }
 
-const vsg::dmat4& Camera::get_inverse_view_matrix() const
+const vsg::dmat4& Camera::get_inv_view_mat() const
 {
-    return inverse_view_matrix;
+    return inv_view_mat;
+}
+
+void Camera::look_on(const vsg::dvec3& pos, double distance)
+{
+    look_at->eye = pos - front * distance;
+    look_at->center = look_at->eye + front;
 }
 
 void Camera::create_orthographic_projection(double aspect_ratio)
@@ -197,38 +198,36 @@ void Camera::create_orthographic_projection(double aspect_ratio)
         halfHeight = halfDim / aspect_ratio;
     }
 
-    orthographic = vsg::Orthographic::create(-halfWidth, halfWidth,
-        -halfHeight, halfHeight, 0.0, radius);
+    orthographic = vsg::Orthographic::create(-halfWidth, halfWidth, -halfHeight,
+                                             halfHeight, 0.0, radius);
 }
 
-void Camera::calculate_front()
+void Camera::calc_front()
 {
-    const double yaw_radians = vsg::radians(yaw_degrees);
-    const double pitch_radians = vsg::radians(pitch_degrees);
+    const double yaw_rad = vsg::radians(yaw_deg);
+    const double pitch_rad = vsg::radians(pitch_deg);
 
-    front = vsg::normalize(vsg::dvec3(
-        std::sin(yaw_radians) * std::cos(pitch_radians),
-        std::cos(yaw_radians) * std::cos(pitch_radians),
-        std::sin(pitch_radians)
-    ));
+    front = vsg::normalize(vsg::dvec3(std::sin(yaw_rad) * std::cos(pitch_rad),
+                                      std::cos(yaw_rad) * std::cos(pitch_rad),
+                                      std::sin(pitch_rad)));
 }
 
-void Camera::calculate_right()
+void Camera::calc_right()
 {
     right = vsg::normalize(vsg::cross(front, look_at->up));
 }
 
-void Camera::calculate_up()
+void Camera::calc_up()
 {
     up = vsg::normalize(vsg::cross(right, front));
 }
 
-void Camera::calculate_inverse_projection_matrix()
+void Camera::calc_inv_proj_mat()
 {
-    inverse_projection_matrix = projectionMatrix->inverse();
+    inv_proj_mat = projectionMatrix->inverse();
 }
 
-void Camera::calculate_inverse_view_matrix()
+void Camera::calc_inv_view_mat()
 {
-    inverse_view_matrix = look_at->inverse();
+    inv_view_mat = look_at->inverse();
 }

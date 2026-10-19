@@ -39,10 +39,9 @@ public:
     ~StateManager();
 
     void defer_switch_to(StateEnum state);
-
     void update(double delta_time);
 
-    const std::unique_ptr<State>& get_current_editor_state() const;
+    State* get_curr_state() const;
 
     RouteNotLoadedState* get_route_not_loaded_state() const;
     BasicEditorState* get_basic_editor_state() const;
@@ -56,8 +55,8 @@ public:
 
 private:
     std::array<std::unique_ptr<State>, TOTAL_STATE_COUNT> states;
-    std::unique_ptr<State>* current_state;
-    std::unique_ptr<State>* deferred_state;
+    State* current_state;
+    State* deferred_state;
 };
 
 #endif // EDITOR_STATE_MANAGER_H

@@ -4,42 +4,39 @@
 #include <vsg/core/Inherit.h>
 #include <vsg/core/Visitor.h>
 
-struct EditorContext;
+#include <memory>
+
+class StateManager;
 
 namespace vsg
 {
 
 class ButtonPressEvent;
+class ButtonReleaseEvent;
 class KeyPressEvent;
 class KeyReleaseEvent;
 class MoveEvent;
 class ScrollWheelEvent;
 
-}
+} // namespace vsg
 
 class EventHandler : public vsg::Inherit<vsg::Visitor, EventHandler>
 {
 public:
-    explicit EventHandler(EditorContext& editor_context);
-
+    explicit EventHandler(const std::unique_ptr<StateManager>& state_manager);
     virtual ~EventHandler() override;
 
     virtual void apply(vsg::KeyPressEvent& keyPress) override;
-
     virtual void apply(vsg::KeyReleaseEvent& keyRelease) override;
-
     virtual void apply(vsg::ButtonPressEvent& buttonPress) override;
-
     virtual void apply(vsg::ButtonReleaseEvent& buttonRelease) override;
-
     virtual void apply(vsg::MoveEvent& moveEvent) override;
-
     virtual void apply(vsg::ScrollWheelEvent& scrollWheel) override;
 
     void update(double delta_time);
 
 private:
-    EditorContext& editor_context;
+    const std::unique_ptr<StateManager>& state_manager;
 };
 
 #endif // EDITOR_EVENT_HANDLER_H
